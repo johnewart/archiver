@@ -215,10 +215,10 @@ func (t *Tar) untarNext(to string) error {
 	if !ok {
 		return fmt.Errorf("expected header to be *tar.Header but was %T", f.Header)
 	}
-	return t.untarFile(f, filepath.Join(to, header.Name))
+	return t.untarFile(f, header.Name, to)
 }
 
-func (t *Tar) untarFile(f File, to string) error {
+func (t *Tar) untarFile(f File, to string, destRoot string) error {
 	// do not overwrite existing files, if configured
 	if !f.IsDir() && !t.OverwriteExisting && fileExists(to) {
 		return fmt.Errorf("file already exists: %s", to)
@@ -228,16 +228,18 @@ func (t *Tar) untarFile(f File, to string) error {
 	if !ok {
 		return fmt.Errorf("expected header to be *tar.Header but was %T", f.Header)
 	}
-
 	switch hdr.Typeflag {
 	case tar.TypeDir:
-		return mkdir(to, f.Mode())
+		outPath := filepath.Join(destRoot, to)
+		return mkdir(outPath, f.Mode())
 	case tar.TypeReg, tar.TypeRegA, tar.TypeChar, tar.TypeBlock, tar.TypeFifo:
-		return writeNewFile(to, f, f.Mode())
+		outPath := filepath.Join(destRoot, to)
+		return writeNewFile(outPath, f, f.Mode())
 	case tar.TypeSymlink:
 		return writeNewSymbolicLink(to, hdr.Linkname)
 	case tar.TypeLink:
-		return writeNewHardLink(to, filepath.Join(to, hdr.Linkname))
+		linkPath := filepath.Join(destRoot, hdr.Linkname)
+		return writeNewHardLink(to, linkPath)
 	case tar.TypeXGlobalHeader:
 		return nil // ignore the pax global header from git-generated tarballs
 	default:
@@ -513,9 +515,8 @@ func (t *Tar) Extract(source, target, destination string) error {
 			if err != nil {
 				return fmt.Errorf("relativizing paths: %v", err)
 			}
-			joined := filepath.Join(destination, end)
 
-			err = t.untarFile(f, joined)
+			err = t.untarFile(f, end, destination)
 			if err != nil {
 				return fmt.Errorf("extracting file %s: %v", th.Name, err)
 			}

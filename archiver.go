@@ -342,7 +342,7 @@ func writeNewHardLink(fpath string, target string) error {
 
 	err = os.Link(target, fpath)
 	if err != nil {
-		return fmt.Errorf("%s: making hard link for: %v", fpath, err)
+		return fmt.Errorf("Error linking %s to %s: %v", fpath, target, err)
 	}
 	return nil
 }
