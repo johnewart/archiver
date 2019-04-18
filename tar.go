@@ -236,10 +236,13 @@ func (t *Tar) untarFile(f File, to string, destRoot string) error {
 		outPath := filepath.Join(destRoot, to)
 		return writeNewFile(outPath, f, f.Mode())
 	case tar.TypeSymlink:
-		return writeNewSymbolicLink(to, hdr.Linkname)
+		linkTarget := filepath.Join(destRoot, hdr.Linkname)
+		linkPath := filepath.Join(destRoot, to)
+		return writeNewSymbolicLink(linkPath, linkTarget)
 	case tar.TypeLink:
-		linkPath := filepath.Join(destRoot, hdr.Linkname)
-		return writeNewHardLink(to, linkPath)
+		linkPath := filepath.Join(destRoot, to)
+		linkTarget := filepath.Join(destRoot, hdr.Linkname)
+		return writeNewHardLink(linkPath, linkTarget)
 	case tar.TypeXGlobalHeader:
 		return nil // ignore the pax global header from git-generated tarballs
 	default:
