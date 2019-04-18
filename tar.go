@@ -236,7 +236,7 @@ func (t *Tar) untarFile(f File, to string, destRoot string) error {
 		outPath := filepath.Join(destRoot, to)
 		return writeNewFile(outPath, f, f.Mode())
 	case tar.TypeSymlink:
-		linkTarget := filepath.Join(destRoot, hdr.Linkname)
+		linkTarget := hdr.Linkname
 		linkPath := filepath.Join(destRoot, to)
 		return writeNewSymbolicLink(linkPath, linkTarget)
 	case tar.TypeLink:
